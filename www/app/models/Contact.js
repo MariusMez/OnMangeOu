@@ -6,7 +6,7 @@ Ext.data.ProxyMgr.registerType("contactstorage",
 
         read: function(operation, callback, scope) {
             var thisProxy = this;
-            navigator.service.contacts.find(
+            navigator.contacts.find(
                 ['id', 'name', 'emails', 'phoneNumbers', 'addresses'],
                 function(deviceContacts) {
 
