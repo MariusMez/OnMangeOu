@@ -6,6 +6,25 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-10
+
+### Ajouté
+- **Design « Saffron Slate »** issu du projet Stitch « Scan de menu » : palette safran, titres
+  en Noto Serif et texte en Manrope, surfaces tonales sans filets, cartes arrondies, puces
+  colorées (tertiaire = marge forte / conforme, erreur = à corriger) et tuiles statistiques.
+- Composants Blade réutilisables : `x-icon` (icônes SVG en ligne), `x-chip`, `x-nav-link`.
+- Navigation basse flottante sur mobile et barre d'application en haut sur bureau.
+- Écran de scan refondu : viseur avec coins et ligne de balayage servant de zone de dépôt,
+  boutons « Importer des photos » / « Depuis le site web », analyses récentes en colonne latérale.
+- Page de résultat refondue : comparaison « carte actuelle / carte recommandée » côte à côte,
+  tuiles de notes, matrice d'ingénierie de menu en quatre colonnes colorées.
+
+### Modifié
+- Les polices sont désormais **auto-hébergées** (`@fontsource/manrope`, `@fontsource/noto-serif`)
+  et embarquées par Vite : plus aucune requête vers un CDN de polices.
+- Historique et observatoire des prix restylés (vignettes, puces de statut, tableau à lignes
+  alternées, cartes de plats avec barre d'accent).
+
 ## [0.3.0] - 2026-10-10
 
 ### Ajouté

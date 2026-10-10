@@ -7,31 +7,52 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @yield('head')
 </head>
-<body class="min-h-full flex flex-col font-sans">
-    <header class="border-b border-border bg-card">
-        <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-            <a href="{{ route('home') }}" class="text-lg font-semibold tracking-tight">
-                <span class="text-accent">Opti</span>Carte
+@php
+    $links = [
+        ['route' => 'home', 'icon' => 'scan', 'label' => 'Scanner', 'active' => request()->routeIs('home')],
+        ['route' => 'analyses.index', 'icon' => 'analytics', 'label' => 'Analyses', 'active' => request()->routeIs('analyses.*')],
+        ['route' => 'stats.index', 'icon' => 'chart', 'label' => 'Observatoire', 'active' => request()->routeIs('stats.*')],
+    ];
+@endphp
+<body class="min-h-full flex flex-col bg-background font-sans text-on-surface pb-28 md:pb-0">
+    <header class="sticky top-0 z-40 bg-background/80 backdrop-blur-xl">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+            <a href="{{ route('home') }}" class="flex items-center gap-3">
+                <span class="flex size-10 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
+                    <x-icon name="utensils" />
+                </span>
+                <span class="font-serif text-xl font-bold text-primary">OptiCarte</span>
             </a>
-            <nav class="flex gap-5 text-sm">
-                <a href="{{ route('home') }}" class="hover:text-accent">Analyser</a>
-                <a href="{{ route('analyses.index') }}" class="hover:text-accent">Historique</a>
-                <a href="{{ route('stats.index') }}" class="hover:text-accent">Observatoire des prix</a>
-            </nav>
-        </div>
-        @if (config('opticarte.mock'))
-            <div class="bg-amber-100 py-1 text-center text-xs text-amber-900">
-                Mode démo : les analyses utilisent une carte fictive, aucune requête à l’API Claude.
+            <div class="flex items-center gap-6">
+                <nav class="hidden items-center gap-8 md:flex">
+                    @foreach ($links as $link)
+                        <x-nav-link :href="route($link['route'])" :icon="$link['icon']" :active="$link['active']">{{ $link['label'] }}</x-nav-link>
+                    @endforeach
+                </nav>
+                @if (config('opticarte.mock'))
+                    <x-chip tone="tertiary" icon="sparkle" title="Les analyses utilisent une carte fictive, aucune requête à l’API Claude.">Mode démo</x-chip>
+                @endif
+                @if (app()->environment('local'))
+                    <a href="/horizon" title="Supervision des analyses (Horizon)" class="flex size-10 items-center justify-center rounded-full text-on-surface transition-colors hover:bg-surface-container">
+                        <x-icon name="settings" />
+                    </a>
+                @endif
             </div>
-        @endif
+        </div>
     </header>
 
-    <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+    <main class="mx-auto w-full max-w-7xl flex-1 px-6 py-8 md:py-12">
         @yield('content')
     </main>
 
-    <footer class="border-t border-border py-4 text-center text-xs text-muted">
-        OptiCarte MVP — analyse propulsée par Claude. Les estimations de marge et de popularité sont indicatives.
+    <footer class="hidden py-8 text-center text-xs text-outline md:block">
+        OptiCarte — analyse propulsée par Claude. Les estimations de marge et de popularité sont indicatives.
     </footer>
+
+    <nav class="fixed bottom-0 left-0 z-40 flex w-full items-center justify-around rounded-t-3xl bg-surface-container-lowest/80 px-4 pb-6 pt-3 shadow-[0_-12px_32px_-16px_rgba(47,47,46,0.25)] backdrop-blur-xl md:hidden">
+        @foreach ($links as $link)
+            <x-nav-link :href="route($link['route'])" :icon="$link['icon']" :active="$link['active']" mobile>{{ $link['label'] }}</x-nav-link>
+        @endforeach
+    </nav>
 </body>
 </html>

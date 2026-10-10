@@ -1,45 +1,56 @@
 @extends('layouts.app')
 
-@section('title', 'Historique des analyses')
+@section('title', 'Analyses')
 
 @section('content')
-    <div class="grid gap-6">
-        <h1 class="text-2xl font-semibold tracking-tight">Historique des analyses</h1>
+    <div class="grid gap-8">
+        <header class="flex flex-wrap items-end justify-between gap-4">
+            <div class="grid gap-2">
+                <span class="text-xs font-bold uppercase tracking-widest text-primary">Historique</span>
+                <h1 class="font-serif text-4xl font-bold tracking-tight">Vos analyses</h1>
+            </div>
+            <a href="{{ route('home') }}" class="flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-on-primary hover:opacity-90">
+                <x-icon name="scan" class="size-4" />
+                Nouvelle analyse
+            </a>
+        </header>
 
         @if ($analyses->isEmpty())
-            <p class="text-muted">
-                Aucune analyse pour l’instant. <a href="{{ route('home') }}" class="text-accent underline">Analyser une carte</a>.
+            <p class="rounded-3xl bg-surface-container-lowest p-8 text-on-surface-variant">
+                Aucune analyse pour l’instant. <a href="{{ route('home') }}" class="font-bold text-primary hover:underline">Scanner une carte</a>.
             </p>
         @else
-            <div class="overflow-x-auto rounded-xl border border-border bg-card">
-                <table class="w-full text-sm">
-                    <thead class="bg-background text-left text-xs uppercase tracking-wide text-muted">
-                        <tr>
-                            <th class="px-4 py-2">Restaurant</th>
-                            <th class="px-4 py-2">Ville</th>
-                            <th class="px-4 py-2">Type</th>
-                            <th class="px-4 py-2">Source</th>
-                            <th class="px-4 py-2">Date</th>
-                            <th class="px-4 py-2">Score Omnes</th>
-                            <th class="px-4 py-2">Statut</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($analyses as $analysis)
-                            <tr class="border-t border-border hover:bg-background">
-                                <td class="px-4 py-2 font-medium">
-                                    <a href="{{ route('analyses.show', $analysis) }}" class="hover:text-accent">{{ $analysis->restaurant_name }}</a>
-                                </td>
-                                <td class="px-4 py-2">{{ $analysis->city }}</td>
-                                <td class="px-4 py-2">{{ $analysis->restaurant_type }}</td>
-                                <td class="px-4 py-2 text-muted">{{ $analysis->fromWebsite() ? 'Site web' : $analysis->image_count.' photo(s)' }}</td>
-                                <td class="px-4 py-2 text-muted">{{ $analysis->created_at->format('d/m/Y H:i') }}</td>
-                                <td class="px-4 py-2">{{ $analysis->omnes ? $analysis->omnes['score'].' / 100' : '—' }}</td>
-                                <td class="px-4 py-2"><x-status-badge :status="$analysis->status" /></td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            <div class="grid gap-4 md:grid-cols-2">
+                @foreach ($analyses as $analysis)
+                    <a href="{{ route('analyses.show', $analysis) }}" class="group flex items-center gap-4 rounded-2xl bg-surface-container-lowest p-4 transition-colors hover:bg-surface-container-low">
+                        <span class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface-container text-outline ring-1 ring-outline-variant/40">
+                            @if ($analysis->image_count > 0)
+                                <img src="{{ route('analyses.image', [$analysis, 1]) }}" alt="" class="size-full object-cover">
+                            @else
+                                <x-icon name="globe" />
+                            @endif
+                        </span>
+                        <span class="min-w-0 flex-1">
+                            <span class="flex items-center gap-2">
+                                <span class="truncate font-bold">{{ $analysis->restaurant_name }}</span>
+                                <x-status-badge :status="$analysis->status" />
+                            </span>
+                            <span class="block text-xs font-medium uppercase tracking-wider text-on-surface-variant">
+                                {{ $analysis->city }} · {{ $analysis->restaurant_type }} · {{ $analysis->fromWebsite() ? 'Site web' : $analysis->image_count.' photo'.($analysis->image_count > 1 ? 's' : '') }}
+                            </span>
+                            <span class="mt-1 flex items-center gap-3 text-[11px] text-outline">
+                                <span class="italic">{{ $analysis->created_at->isoFormat('D MMM YYYY, HH:mm') }}</span>
+                                @if ($analysis->omnes)
+                                    <span class="font-bold not-italic text-primary">Omnes {{ $analysis->omnes['score'] }} / 100</span>
+                                @endif
+                                @if ($analysis->dishes_count > 0)
+                                    <span>{{ $analysis->dishes_count }} plats</span>
+                                @endif
+                            </span>
+                        </span>
+                        <x-icon name="chevron-right" class="text-outline transition-colors group-hover:text-primary" />
+                    </a>
+                @endforeach
             </div>
         @endif
     </div>

@@ -15,7 +15,9 @@ Application **Laravel 13** (PHP 8.3+, conçue pour PHP 8.5) avec :
 - [spatie/laravel-pdf](https://spatie.be/docs/laravel-pdf) et
   [Browsershot](https://spatie.be/docs/browsershot) (PDF et capture de sites via Chromium),
 - Blade + Tailwind CSS 4, SQLite, [Laravel Boost](https://laravel.com/docs/boost) pour le
-  développement assisté par IA.
+  développement assisté par IA,
+- interface inspirée du design Stitch « Saffron Slate » (polices Noto Serif et Manrope
+  auto-hébergées, composants Blade `x-icon`, `x-chip`, `x-nav-link`).
 
 ## Fonctionnalités
 
@@ -118,7 +120,8 @@ app/
   Http/Controllers/                    AnalysisController, AnalysisPdfController,
                                        AnalysisImageController, StatsController
   Models/Analysis.php, Models/Dish.php
-resources/views/                       Blade : analyses/*, stats/*, pdf/menu
+resources/views/                       Blade : layouts/app, components/*, analyses/*, stats/*, pdf/menu
+resources/css/app.css                  thème Tailwind 4 (@theme) : palette safran, polices
 resources/js/app.js                    Laravel Echo : écoute du canal analyses.{id}
 config/opticarte.php, config/ai.php, config/horizon.php, config/reverb.php, config/laravel-pdf.php
 tests/Unit, tests/Feature

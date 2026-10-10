@@ -1,3 +1,12 @@
+import '@fontsource/manrope/400.css';
+import '@fontsource/manrope/500.css';
+import '@fontsource/manrope/600.css';
+import '@fontsource/manrope/700.css';
+import '@fontsource/manrope/800.css';
+import '@fontsource/noto-serif/400.css';
+import '@fontsource/noto-serif/400-italic.css';
+import '@fontsource/noto-serif/700.css';
+import '@fontsource/noto-serif/700-italic.css';
 import './echo';
 
 /**
@@ -17,3 +26,26 @@ if (page) {
         reload();
     });
 }
+
+/**
+ * Écran de scan : le viseur sert de zone de dépôt, les boutons secondaires
+ * ouvrent le sélecteur de photos ou mettent le champ « site web » en avant.
+ */
+const fileInput = document.querySelector('[data-file-input]');
+const fileList = document.querySelector('[data-file-list]');
+
+if (fileInput && fileList) {
+    fileInput.addEventListener('change', () => {
+        const names = Array.from(fileInput.files).map((file) => file.name);
+        fileList.textContent = names.length > 0 ? names.join(' · ') : '';
+        fileList.hidden = names.length === 0;
+    });
+
+    document.querySelector('[data-pick-photos]')?.addEventListener('click', () => fileInput.click());
+}
+
+document.querySelector('[data-focus-website]')?.addEventListener('click', () => {
+    const field = document.querySelector('[data-website-input]');
+    field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    field?.focus();
+});

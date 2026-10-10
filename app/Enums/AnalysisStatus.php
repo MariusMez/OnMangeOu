@@ -23,13 +23,14 @@ enum AnalysisStatus: string
         };
     }
 
-    public function badgeClass(): string
+    /** Ton de la puce de statut (voir resources/views/components/chip.blade.php). */
+    public function chipTone(): string
     {
         return match ($this) {
-            self::Pending => 'bg-zinc-100 text-zinc-700',
-            self::Capturing, self::Extracting, self::Optimizing => 'bg-amber-100 text-amber-800',
-            self::Done => 'bg-emerald-100 text-emerald-800',
-            self::Error => 'bg-red-100 text-red-800',
+            self::Pending => 'neutral',
+            self::Capturing, self::Extracting, self::Optimizing => 'secondary',
+            self::Done => 'tertiary',
+            self::Error => 'error',
         };
     }
 

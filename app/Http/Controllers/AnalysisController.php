@@ -13,6 +13,7 @@ class AnalysisController extends Controller
     public function index(): View
     {
         $analyses = Analysis::query()
+            ->withCount('dishes')
             ->latest()
             ->orderByDesc('id')
             ->limit(100)
@@ -25,6 +26,12 @@ class AnalysisController extends Controller
     {
         return view('analyses.create', [
             'restaurantTypes' => StoreAnalysisRequest::RESTAURANT_TYPES,
+            'recentAnalyses' => Analysis::query()
+                ->withCount('dishes')
+                ->latest()
+                ->orderByDesc('id')
+                ->limit(3)
+                ->get(),
         ]);
     }
 

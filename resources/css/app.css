@@ -3,20 +3,58 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/*
+ * Système de design « Saffron Slate » (Stitch) : surfaces tonales sans bordures,
+ * accents safran, titres en Noto Serif et interface en Manrope.
+ */
 @theme {
-    --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-serif: 'Noto Serif', ui-serif, Georgia, 'Times New Roman', serif;
 
-    --color-background: #faf7f2;
-    --color-foreground: #1f1a17;
-    --color-accent: #8b2f1d;
-    --color-accent-soft: #f3e3dd;
-    --color-muted: #6b625c;
-    --color-card: #ffffff;
-    --color-border: #e6dfd6;
+    --color-primary: #9a4000;
+    --color-primary-dim: #873700;
+    --color-primary-container: #ff7a2a;
+    --color-on-primary: #fff0ea;
+    --color-on-primary-container: #401600;
+
+    --color-secondary: #8f4900;
+    --color-secondary-container: #ffc69e;
+    --color-on-secondary-container: #713800;
+
+    --color-tertiary: #7a5500;
+    --color-tertiary-container: #fab422;
+    --color-on-tertiary-container: #523800;
+
+    --color-error: #b02500;
+    --color-error-container: #f95630;
+    --color-on-error-container: #520c00;
+
+    --color-background: #f9f6f5;
+    --color-surface: #f9f6f5;
+    --color-surface-container-lowest: #ffffff;
+    --color-surface-container-low: #f3f0ef;
+    --color-surface-container: #eae7e7;
+    --color-surface-container-high: #e4e2e1;
+    --color-surface-container-highest: #dfdcdc;
+    --color-on-surface: #2f2f2e;
+    --color-on-surface-variant: #5c5b5b;
+    --color-outline: #787676;
+    --color-outline-variant: #afadac;
 }
 
 body {
     background: var(--color-background);
-    color: var(--color-foreground);
+    color: var(--color-on-surface);
+}
+
+/* Ligne de balayage animée du viseur sur l'écran de scan. */
+@keyframes scan-sweep {
+    0% { transform: translateY(-120px); opacity: 0; }
+    15% { opacity: 1; }
+    85% { opacity: 1; }
+    100% { transform: translateY(120px); opacity: 0; }
+}
+
+.scan-line {
+    animation: scan-sweep 3.2s ease-in-out infinite;
 }

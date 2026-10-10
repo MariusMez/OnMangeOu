@@ -141,8 +141,8 @@ class AnalysisFlowTest extends TestCase
         $this->get(route('analyses.index'))
             ->assertOk()
             ->assertSee($analysis->restaurant_name)
-            ->assertSee('1 photo(s)')
-            ->assertSee('14 / 100');
+            ->assertSee('1 photo')
+            ->assertSee('Omnes 14 / 100');
 
         $this->get(route('stats.index', ['city' => 'Lyon']))
             ->assertOk()
