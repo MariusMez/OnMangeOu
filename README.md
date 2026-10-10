@@ -6,6 +6,8 @@ d'Omnes et l'ingénierie de menu, propose corrections, descriptions, mise en pag
 génère une carte optimisée en PDF. Chaque analyse alimente une base de plats (prix, année,
 ville, type de restaurant) qui sert d'observatoire des prix.
 
+Application Laravel 13 (PHP 8.3+, conçue pour PHP 8.5), Blade + Tailwind CSS 4, SQLite.
+
 ## Fonctionnalités
 
 - **Lecture de la carte** : 1 à 6 photos (JPG, PNG, WEBP), redimensionnées côté serveur, transcrites
@@ -24,20 +26,36 @@ ville, type de restaurant) qui sert d'observatoire des prix.
 
 ## Démarrage
 
-Prérequis : Node.js 22+.
+Prérequis : PHP 8.3 ou plus (8.5 recommandé) avec les extensions `gd`, `sqlite3`, `mbstring`,
+`intl`, Composer et Node.js 22+.
 
 ```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
 npm install
-cp .env.example .env.local   # puis renseigner ANTHROPIC_API_KEY
-npm run dev
+npm run build        # ou `npm run dev` pendant le développement
 ```
 
-Ouvrir http://localhost:3000.
+Renseigner `ANTHROPIC_API_KEY` dans `.env`, puis lancer les processus de développement
+(serveur HTTP, worker de queue, logs, Vite) :
+
+```bash
+composer run dev
+```
+
+Ouvrir http://localhost:8000.
+
+Les analyses tournent dans une file de tâches (`QUEUE_CONNECTION=database`) : le worker
+`php artisan queue:listen` est indispensable, `composer run dev` le démarre.
+
+### Mode démo
 
 Sans clé API, le mode démo permet de parcourir toute l'interface avec une carte fictive :
 
 ```bash
-OPTICARTE_MOCK=1 npm run dev
+OPTICARTE_MOCK=true composer run dev
 ```
 
 ### Variables d'environnement
@@ -46,68 +64,63 @@ OPTICARTE_MOCK=1 npm run dev
 | --- | --- | --- |
 | `ANTHROPIC_API_KEY` | Clé API Anthropic (ou profil `ant auth login`) | — |
 | `OPTICARTE_MODEL` | Modèle Claude utilisé | `claude-opus-5-5` |
-| `OPTICARTE_MOCK` | `1` pour le mode démo sans appel API | `0` |
-| `OPTICARTE_DATA_DIR` | Dossier de la base SQLite et des photos | `./data` |
+| `OPTICARTE_MOCK` | `true` pour le mode démo sans appel API | `false` |
+| `OPTICARTE_DISK` | Disque de stockage des photos (`config/filesystems.php`) | `local` |
 
-### Scripts
+### Tests et qualité
 
 ```bash
-npm run dev        # serveur de développement
-npm run build      # build de production
-npm run start      # serveur de production
-npm test           # tests unitaires (principes d'Omnes, formatage des prix)
-npm run typecheck  # vérification TypeScript
-npm run lint       # ESLint
+php artisan test        # tests unitaires et fonctionnels (mode démo, queue synchrone)
+vendor/bin/pint         # formatage du code
 ```
 
 ## Architecture
 
 ```
-src/
-  app/
-    page.tsx                      formulaire d'upload
-    api/analyze/route.ts          POST : crée l'analyse et lance le pipeline
-    analyses/page.tsx             historique
-    analyses/[id]/page.tsx        résultat (diagnostic, Omnes, carte optimisée)
-    analyses/[id]/pdf/route.ts    export PDF
-    analyses/[id]/images/[n]/     photos normalisées
-    stats/page.tsx                observatoire des prix
-  lib/
-    schemas.ts     schémas zod partagés (sorties structurées Claude, base, UI)
-    llm.ts         appels Claude : extraction (vision) puis optimisation
-    omnes.ts       principes d'Omnes
-    pipeline.ts    orchestration d'une analyse
-    db.ts          SQLite (better-sqlite3) : analyses + base de plats + statistiques
-    pdf.ts         rendu PDF (PDFKit)
-    images.ts      normalisation des photos (sharp)
-    mock-data.ts   fixtures du mode démo
-tests/omnes.test.ts
+app/
+  Actions/StartMenuAnalysis.php        normalise les photos, crée l'analyse, lance le job
+  Jobs/RunMenuAnalysis.php             pipeline en file de tâches
+  Contracts/MenuAnalyst.php            frontière avec le modèle de langage
+  Services/Claude/ClaudeMenuAnalyst.php  appels Claude : extraction (vision) puis optimisation
+  Services/Claude/MockMenuAnalyst.php  mode démo
+  Claude/MenuSchemas.php               schémas JSON des sorties structurées
+  Services/Omnes/OmnesAnalyzer.php     principes d'Omnes
+  Services/ImageNormalizer.php         normalisation des photos (intervention/image, GD)
+  Services/ImageStore.php              stockage des photos (disque Laravel)
+  Services/DishImporter.php            base de plats
+  Services/PriceObservatory.php        statistiques de prix
+  Services/MenuPdfRenderer.php         export PDF (dompdf)
+  Http/Controllers/                    AnalysisController, AnalysisPdfController,
+                                       AnalysisImageController, StatsController
+  Models/Analysis.php, Models/Dish.php
+resources/views/                       Blade : analyses/*, stats/*, pdf/menu
+tests/Unit, tests/Feature
 ```
 
-Pipeline d'une analyse :
+Pipeline d'une analyse (`RunMenuAnalysis`) :
 
-1. Les photos sont normalisées (orientation EXIF, 1600 px max, JPEG) et stockées dans `data/uploads/<id>/`.
-2. `extractMenu` envoie les images à Claude avec une sortie structurée (`ExtractedMenuSchema`).
-3. `computeOmnes` calcule les principes d'Omnes sur les prix lus.
-4. Les plats sont insérés dans la table `dishes` (base de prix datée et localisée).
-5. `optimizeMenu` envoie la carte, le rapport Omnes et le contexte du restaurateur à Claude,
-   qui renvoie le diagnostic et la carte optimisée (`OptimizationSchema`).
+1. Les photos sont normalisées (orientation EXIF, 1600 px max, JPEG) et stockées dans
+   `storage/app/private/analyses/<id>/`.
+2. `MenuAnalyst::extract` envoie les images à Claude avec une sortie structurée
+   (`MenuSchemas::extractedMenu`).
+3. `OmnesAnalyzer` calcule les principes d'Omnes sur les prix lus.
+4. `DishImporter` insère les plats dans la table `dishes` (base de prix datée et localisée).
+5. `MenuAnalyst::optimize` envoie la carte, le rapport Omnes et le contexte du restaurateur à
+   Claude, qui renvoie le diagnostic et la carte optimisée (`MenuSchemas::optimization`).
 6. La page de résultat se rafraîchit automatiquement jusqu'à la fin du traitement.
 
-Les appels Claude utilisent `claude-opus-5-5`, les sorties structurées (zod) et le repli
-serveur automatique en cas de refus (`fallbacks: "default"`). Le prompt d'optimisation est mis
-en cache (prompt caching).
+Les appels Claude utilisent `claude-opus-5-5`, les sorties structurées (schéma JSON) et le repli
+serveur automatique en cas de refus (`fallbacks: default`). Le prompt d'optimisation est mis en
+cache (prompt caching).
 
 ## Limites du MVP et prochaines étapes
 
 - **Collecte Google Places** : non implémentée. La base de plats est alimentée uniquement par
-  les cartes uploadées. Piste : un script d'import qui récupère les photos de menus via l'API
-  Places, les passe dans `extractMenu` et les insère avec le type et la localisation du lieu.
+  les cartes uploadées. Piste : une commande Artisan qui récupère les photos de menus via l'API
+  Places, les passe dans `MenuAnalyst::extract` et les insère avec le type et la localisation.
 - **Rapport prix demandé / prix offert** : affiché à titre informatif, il nécessite les données
-  de ventes (export de caisse) pour être calculé. La matrice d'ingénierie de menu est donc une
-  estimation du modèle, pas une mesure.
+  de ventes (export de caisse). La matrice d'ingénierie de menu est donc une estimation du
+  modèle, pas une mesure.
 - **Pas d'authentification** : toutes les analyses sont visibles par tous les utilisateurs du
   serveur. À ajouter avant toute mise en ligne.
-- **Traitement en arrière-plan** dans le processus Next.js : suffisant pour un MVP, à déplacer
-  dans une file de tâches pour la production.
 - **PDF** : une mise en page unique. Pistes : plusieurs gabarits, logo, format carte pliée.
