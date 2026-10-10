@@ -18,6 +18,7 @@
                             <th class="px-4 py-2">Restaurant</th>
                             <th class="px-4 py-2">Ville</th>
                             <th class="px-4 py-2">Type</th>
+                            <th class="px-4 py-2">Source</th>
                             <th class="px-4 py-2">Date</th>
                             <th class="px-4 py-2">Score Omnes</th>
                             <th class="px-4 py-2">Statut</th>
@@ -31,6 +32,7 @@
                                 </td>
                                 <td class="px-4 py-2">{{ $analysis->city }}</td>
                                 <td class="px-4 py-2">{{ $analysis->restaurant_type }}</td>
+                                <td class="px-4 py-2 text-muted">{{ $analysis->fromWebsite() ? 'Site web' : $analysis->image_count.' photo(s)' }}</td>
                                 <td class="px-4 py-2 text-muted">{{ $analysis->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="px-4 py-2">{{ $analysis->omnes ? $analysis->omnes['score'].' / 100' : '—' }}</td>
                                 <td class="px-4 py-2"><x-status-badge :status="$analysis->status" /></td>

@@ -3,9 +3,10 @@
 namespace App\Jobs;
 
 use App\Contracts\MenuAnalyst;
+use App\Contracts\WebsiteCapture;
 use App\Enums\AnalysisStatus;
 use App\Models\Analysis;
-use App\Services\Claude\ClaudeErrorMessage;
+use App\Services\Ai\AiErrorMessage;
 use App\Services\DishImporter;
 use App\Services\ImageStore;
 use App\Services\Omnes\OmnesAnalyzer;
@@ -15,8 +16,8 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Pipeline d'une analyse : photos → extraction LLM → principes d'Omnes →
- * base de plats → optimisation LLM. Le statut de l'analyse est mis à jour
+ * Pipeline d'une analyse : (capture du site web →) photos → extraction LLM →
+ * principes d'Omnes → base de plats → optimisation LLM. Le statut de l'analyse est mis à jour
  * à chaque étape pour que la page de résultat suive la progression.
  */
 class RunMenuAnalysis implements ShouldQueue
@@ -31,10 +32,19 @@ class RunMenuAnalysis implements ShouldQueue
 
     public function handle(
         MenuAnalyst $analyst,
+        WebsiteCapture $capture,
         OmnesAnalyzer $omnes,
         ImageStore $images,
         DishImporter $dishes,
     ): void {
+        if ($this->analysis->fromWebsite() && $this->analysis->image_count === 0) {
+            $this->analysis->update(['status' => AnalysisStatus::Capturing]);
+
+            $captured = $capture->capture($this->analysis->website_url);
+            $images->store($this->analysis, $captured);
+            $this->analysis->update(['image_count' => count($captured)]);
+        }
+
         $this->analysis->update(['status' => AnalysisStatus::Extracting]);
 
         $menu = $analyst->extract($images->all($this->analysis));
@@ -56,7 +66,7 @@ class RunMenuAnalysis implements ShouldQueue
 
     public function failed(?Throwable $exception): void
     {
-        $this->analysis->markFailed(ClaudeErrorMessage::describe($exception));
+        $this->analysis->markFailed(AiErrorMessage::describe($exception));
 
         Log::error('Menu analysis failed', [
             'analysis_id' => $this->analysis->id,

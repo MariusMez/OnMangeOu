@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AnalysisStatus;
+use App\Events\AnalysisUpdated;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -19,6 +20,7 @@ class Analysis extends Model
         'city',
         'restaurant_type',
         'goal',
+        'website_url',
         'image_count',
         'model',
         'mock',
@@ -32,6 +34,12 @@ class Analysis extends Model
     {
         static::creating(function (Analysis $analysis): void {
             $analysis->id ??= bin2hex(random_bytes(4));
+        });
+
+        static::updated(function (Analysis $analysis): void {
+            if ($analysis->wasChanged('status')) {
+                AnalysisUpdated::dispatch($analysis);
+            }
         });
     }
 
@@ -50,6 +58,11 @@ class Analysis extends Model
     public function dishes(): HasMany
     {
         return $this->hasMany(Dish::class);
+    }
+
+    public function fromWebsite(): bool
+    {
+        return $this->website_url !== null;
     }
 
     public function isRunning(): bool

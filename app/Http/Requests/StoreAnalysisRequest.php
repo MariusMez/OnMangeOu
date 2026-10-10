@@ -31,7 +31,8 @@ class StoreAnalysisRequest extends FormRequest
             'city' => ['required', 'string', 'max:120'],
             'restaurant_type' => ['required', 'string', 'max:80'],
             'goal' => ['nullable', 'string', 'max:500'],
-            'images' => ['required', 'array', 'min:1', 'max:'.config('opticarte.max_images')],
+            'website_url' => ['nullable', 'url:http,https', 'max:500'],
+            'images' => ['required_without:website_url', 'array', 'max:'.config('opticarte.max_images')],
             'images.*' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:'.config('opticarte.max_image_kb')],
         ];
     }
@@ -43,8 +44,8 @@ class StoreAnalysisRequest extends FormRequest
             'restaurant_name.required' => 'Le nom du restaurant est requis.',
             'city.required' => 'La ville est requise.',
             'restaurant_type.required' => 'Le type de restaurant est requis.',
-            'images.required' => 'Ajoutez au moins une photo de la carte.',
-            'images.min' => 'Ajoutez au moins une photo de la carte.',
+            'images.required_without' => 'Ajoutez au moins une photo de la carte, ou l’adresse du site du restaurant.',
+            'website_url.url' => 'L’adresse du site doit commencer par http:// ou https://.',
             'images.max' => 'Maximum :max photos par analyse.',
             'images.*.image' => 'Chaque fichier doit être une image.',
             'images.*.mimes' => 'Formats acceptés : JPG, PNG, WEBP.',

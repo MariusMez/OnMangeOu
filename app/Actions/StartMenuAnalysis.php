@@ -17,7 +17,7 @@ class StartMenuAnalysis
     ) {}
 
     /**
-     * @param  array{restaurant_name: string, city: string, restaurant_type: string, goal?: string|null}  $data
+     * @param  array{restaurant_name: string, city: string, restaurant_type: string, goal?: string|null, website_url?: string|null}  $data
      * @param  list<UploadedFile>  $files
      */
     public function handle(array $data, array $files): Analysis
@@ -35,6 +35,7 @@ class StartMenuAnalysis
             'city' => $data['city'],
             'restaurant_type' => $data['restaurant_type'],
             'goal' => $data['goal'] ?? null,
+            'website_url' => $data['website_url'] ?? null,
             'image_count' => count($images),
             'model' => $mock ? 'mock' : config('opticarte.model'),
             'mock' => $mock,

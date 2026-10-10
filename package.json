@@ -15,5 +15,10 @@
     },
     "optionalDependencies": {
         "@laravel/multiplex": "^0.4.1"
+    },
+    "dependencies": {
+        "laravel-echo": "^2.6.1",
+        "puppeteer": "^25.13.0",
+        "pusher-js": "^8.6.0"
     }
 }

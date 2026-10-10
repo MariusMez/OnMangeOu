@@ -4,7 +4,8 @@
 
 @section('head')
     @if ($analysis->isRunning())
-        <meta http-equiv="refresh" content="3">
+        {{-- Filet de sécurité si le WebSocket (Reverb) n'est pas disponible : voir resources/js/app.js --}}
+        <meta http-equiv="refresh" content="20">
     @endif
 @endsection
 
@@ -19,7 +20,7 @@
 @endphp
 
 @section('content')
-    <div class="grid gap-8">
+    <div class="grid gap-8" data-analysis-id="{{ $analysis->id }}" data-analysis-running="{{ $analysis->isRunning() ? '1' : '0' }}">
         <header class="flex flex-wrap items-start justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-semibold tracking-tight">{{ $analysis->restaurant_name }}</h1>
@@ -29,6 +30,9 @@
                 </p>
                 @if ($analysis->goal)
                     <p class="mt-1 text-sm">Objectif : {{ $analysis->goal }}</p>
+                @endif
+                @if ($analysis->fromWebsite())
+                    <p class="mt-1 text-sm">Source : <a href="{{ $analysis->website_url }}" target="_blank" rel="noreferrer" class="text-accent underline">{{ $analysis->website_url }}</a></p>
                 @endif
             </div>
             <div class="flex items-center gap-3">
@@ -54,15 +58,17 @@
             <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                 @if ($analysis->status === \App\Enums\AnalysisStatus::Optimizing)
                     Carte lue. Le consultant IA rédige le diagnostic et la carte optimisée (1 à 3 minutes)…
+                @elseif ($analysis->status === \App\Enums\AnalysisStatus::Capturing)
+                    Navigation sur le site du restaurant et capture de la carte…
                 @else
-                    Lecture des photos en cours… Cette page se rafraîchit automatiquement.
+                    Lecture des photos en cours… Cette page se met à jour automatiquement.
                 @endif
             </div>
         @endif
 
         @if ($analysis->image_count > 0)
             <section class="grid gap-2">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">Photos analysées</h2>
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">{{ $analysis->fromWebsite() ? 'Captures du site analysées' : 'Photos analysées' }}</h2>
                 <div class="flex flex-wrap gap-3">
                     @for ($i = 1; $i <= $analysis->image_count; $i++)
                         <a href="{{ route('analyses.image', [$analysis, $i]) }}" target="_blank" rel="noreferrer">

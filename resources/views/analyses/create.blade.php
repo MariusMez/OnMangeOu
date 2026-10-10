@@ -7,8 +7,8 @@
         <section class="grid gap-3">
             <h1 class="text-3xl font-semibold tracking-tight">Votre carte vend-elle vraiment vos meilleurs plats ?</h1>
             <p class="max-w-2xl text-muted">
-                Photographiez votre carte. OptiCarte la transcrit, applique les principes d’Omnes et l’ingénierie de menu,
-                corrige les fautes, réécrit les descriptions et génère une carte optimisée prête à imprimer.
+                Photographiez votre carte ou indiquez le site de votre restaurant. OptiCarte la transcrit, applique les principes
+                d’Omnes et l’ingénierie de menu, corrige les fautes, réécrit les descriptions et génère une carte optimisée prête à imprimer.
             </p>
         </section>
 
@@ -42,11 +42,20 @@
                 </label>
             </div>
 
-            <label class="grid gap-2 text-sm">
-                <span class="font-medium">Photos de la carte (1 à {{ config('opticarte.max_images') }}, JPG / PNG / WEBP)</span>
-                <input type="file" name="images[]" accept="image/jpeg,image/png,image/webp" multiple required
-                       class="rounded-md border border-dashed border-border bg-background px-3 py-6 file:mr-4 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-white">
-            </label>
+            <div class="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
+                <label class="grid gap-2 text-sm">
+                    <span class="font-medium">Photos de la carte (1 à {{ config('opticarte.max_images') }}, JPG / PNG / WEBP)</span>
+                    <input type="file" name="images[]" accept="image/jpeg,image/png,image/webp" multiple
+                           class="rounded-md border border-dashed border-border bg-background px-3 py-6 file:mr-4 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-white">
+                </label>
+                <div class="text-center text-xs font-semibold uppercase tracking-wide text-muted">ou</div>
+                <label class="grid gap-2 text-sm">
+                    <span class="font-medium">Site web du restaurant</span>
+                    <input type="url" name="website_url" value="{{ old('website_url') }}" maxlength="500" placeholder="https://www.chez-lucien.fr"
+                           class="rounded-md border border-border px-3 py-2">
+                    <span class="text-xs text-muted">OptiCarte navigue sur le site, repère la page « carte » et la capture pour l’analyse.</span>
+                </label>
+            </div>
 
             @if ($errors->any())
                 <ul class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">

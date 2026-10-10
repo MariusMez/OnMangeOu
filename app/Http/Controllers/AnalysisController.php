@@ -31,7 +31,7 @@ class AnalysisController extends Controller
     public function store(StoreAnalysisRequest $request, StartMenuAnalysis $start): RedirectResponse
     {
         $analysis = $start->handle(
-            $request->safe()->only(['restaurant_name', 'city', 'restaurant_type', 'goal']),
+            $request->safe()->only(['restaurant_name', 'city', 'restaurant_type', 'goal', 'website_url']),
             $request->file('images', []),
         );
 

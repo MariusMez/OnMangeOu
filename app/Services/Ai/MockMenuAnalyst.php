@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Claude;
+namespace App\Services\Ai;
 
 use App\Contracts\MenuAnalyst;
 use App\Models\Analysis;

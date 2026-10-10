@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Enums\AnalysisStatus;
+use App\Events\AnalysisUpdated;
 use App\Models\Analysis;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
+use Spatie\LaravelPdf\Facades\Pdf;
 use Tests\TestCase;
 
 class AnalysisFlowTest extends TestCase
@@ -32,6 +35,7 @@ class AnalysisFlowTest extends TestCase
         $this->assertSame(AnalysisStatus::Done, $analysis->status);
         $this->assertSame('mock', $analysis->model);
         $this->assertSame(1, $analysis->image_count);
+        $this->assertNull($analysis->website_url);
         $this->assertSame(17, $analysis->dishes()->count());
         $this->assertSame(14, $analysis->omnes['score']);
         Storage::disk('local')->assertExists("analyses/{$analysis->id}/1.jpg");
@@ -44,14 +48,68 @@ class AnalysisFlowTest extends TestCase
             ->assertSee(route('analyses.pdf', $analysis));
     }
 
-    public function test_the_optimised_menu_is_exported_as_a_pdf(): void
+    public function test_a_restaurant_website_is_captured_then_analysed(): void
     {
+        $input = $this->validInput();
+        unset($input['images']);
+        $input['website_url'] = 'https://www.chez-lucien.example';
+
+        $this->post(route('analyses.store'), $input)->assertSessionHasNoErrors();
+
+        $analysis = Analysis::sole();
+
+        $this->assertSame(AnalysisStatus::Done, $analysis->status);
+        $this->assertSame('https://www.chez-lucien.example', $analysis->website_url);
+        $this->assertSame(1, $analysis->image_count);
+        Storage::disk('local')->assertExists("analyses/{$analysis->id}/1.jpg");
+
+        $this->get(route('analyses.show', $analysis))
+            ->assertOk()
+            ->assertSee('Captures du site analysées')
+            ->assertSee('https://www.chez-lucien.example');
+    }
+
+    public function test_status_changes_are_broadcast_to_the_analysis_channel(): void
+    {
+        Event::fake([AnalysisUpdated::class]);
+
         $analysis = $this->analyse();
 
-        $response = $this->get(route('analyses.pdf', $analysis));
+        Event::assertDispatched(AnalysisUpdated::class, function (AnalysisUpdated $event) use ($analysis): bool {
+            return $event->analysis->is($analysis)
+                && $event->broadcastOn()[0]->name === "analyses.{$analysis->id}";
+        });
+        Event::assertDispatched(
+            AnalysisUpdated::class,
+            fn (AnalysisUpdated $event) => $event->broadcastWith()['status'] === AnalysisStatus::Done->value,
+        );
+    }
 
-        $response->assertOk()->assertHeader('content-type', 'application/pdf');
-        $this->assertStringStartsWith('%PDF', $response->getContent());
+    public function test_the_running_page_subscribes_to_live_updates(): void
+    {
+        $analysis = Analysis::create([
+            'status' => AnalysisStatus::Extracting,
+            'restaurant_name' => 'Chez Lucien',
+            'city' => 'Lyon',
+            'restaurant_type' => 'Bistrot / brasserie',
+        ]);
+
+        $this->get(route('analyses.show', $analysis))
+            ->assertOk()
+            ->assertSee('data-analysis-running="1"', false)
+            ->assertSee('Lecture de la carte…');
+    }
+
+    public function test_the_optimised_menu_is_exported_as_a_pdf(): void
+    {
+        Pdf::fake();
+        $analysis = $this->analyse();
+
+        $this->get(route('analyses.pdf', $analysis))->assertOk();
+
+        Pdf::assertRespondedWithPdf(fn ($pdf) => $pdf->viewName === 'pdf.menu'
+            && $pdf->contains(['Chez Lucien', 'Risotto crémeux aux champignons des bois'])
+            && ! $pdf->contains('€'));
     }
 
     public function test_the_pdf_is_unavailable_until_the_analysis_is_done(): void
@@ -83,6 +141,7 @@ class AnalysisFlowTest extends TestCase
         $this->get(route('analyses.index'))
             ->assertOk()
             ->assertSee($analysis->restaurant_name)
+            ->assertSee('1 photo(s)')
             ->assertSee('14 / 100');
 
         $this->get(route('stats.index', ['city' => 'Lyon']))
@@ -95,7 +154,7 @@ class AnalysisFlowTest extends TestCase
             ->assertSee('Aucune donnée pour ces filtres.');
     }
 
-    public function test_at_least_one_photo_is_required(): void
+    public function test_a_photo_or_a_website_is_required(): void
     {
         $this->from(route('home'))
             ->post(route('analyses.store'), ['restaurant_name' => 'Chez Lucien', 'city' => 'Lyon', 'restaurant_type' => 'Bistrot / brasserie'])
@@ -103,6 +162,18 @@ class AnalysisFlowTest extends TestCase
             ->assertSessionHasErrors(['images']);
 
         $this->assertDatabaseCount('analyses', 0);
+    }
+
+    public function test_the_website_address_must_be_a_web_url(): void
+    {
+        $input = $this->validInput();
+        unset($input['images']);
+        $input['website_url'] = 'chez-lucien.fr';
+
+        $this->from(route('home'))
+            ->post(route('analyses.store'), $input)
+            ->assertRedirect(route('home'))
+            ->assertSessionHasErrors(['website_url']);
     }
 
     public function test_only_images_are_accepted(): void
