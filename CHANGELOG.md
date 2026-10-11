@@ -31,6 +31,10 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 - PHP 8.4 minimum (au lieu de 8.3) : les dépendances passent à Symfony 8.1, qui l’exige. La CI ne
   teste plus que PHP 8.4 et 8.5.
 
+### Corrigé
+- Observatoire des prix : le nombre de restaurants était faux sur MySQL, où `||` n’est pas une
+  concaténation. Il est maintenant compté par sous-requête, quel que soit le moteur.
+
 ## [0.4.0] - 2026-10-10
 
 ### Ajouté
