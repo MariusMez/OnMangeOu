@@ -35,6 +35,21 @@ class PriceEvolutionTest extends TestCase
         $this->assertSame([], $observatory->priceIndex(['restaurant_ids' => []]));
     }
 
+    public function test_restaurants_serving_the_same_dish_are_compared_and_counted_separately(): void
+    {
+        $corner = Restaurant::factory()->create();
+        $station = Restaurant::factory()->create();
+
+        foreach ([[$corner, 2025, 2.0], [$corner, 2026, 2.2], [$station, 2025, 3.0], [$station, 2026, 3.0]] as [$restaurant, $year, $price]) {
+            Dish::factory()->collectedAt($restaurant)->create(['year' => $year, 'name' => 'Café', 'price' => $price]);
+        }
+
+        $observatory = app(PriceObservatory::class);
+
+        $this->assertSame([['from' => 2025, 'to' => 2026, 'pairs' => 2, 'median' => 5.0, 'mean' => 5.0]], $observatory->priceIndex());
+        $this->assertSame([2025 => 2, 2026 => 2], $observatory->coverage()->mapWithKeys(fn (object $row): array => [(int) $row->year => (int) $row->restaurants])->all());
+    }
+
     public function test_the_restaurants_of_a_zone_are_counted_by_status_and_type(): void
     {
         $this->seedTwoYearsOfPrices();

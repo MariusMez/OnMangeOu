@@ -19,8 +19,12 @@ use Illuminate\Support\Facades\DB;
  */
 class PriceObservatory
 {
-    /** Clé d'un restaurant dans la base de plats : restaurant collecté, sinon analyse. */
-    private const string RESTAURANT_KEY = "COALESCE('r' || restaurant_id, 'a' || analysis_id)";
+    /**
+     * Nombre de restaurants d'un groupe de plats. Un plat vient soit d'un restaurant collecté
+     * (restaurant_id), soit d'une analyse (analysis_id) : la somme des deux comptes distincts
+     * évite une concaténation, car `||` n'en est pas une en MySQL.
+     */
+    private const string RESTAURANT_COUNT = 'COUNT(DISTINCT restaurant_id) + COUNT(DISTINCT analysis_id)';
 
     /**
      * Un restaurant est un couple (nom, ville) distinct, sans tenir compte de la casse. Il est
@@ -76,7 +80,7 @@ class PriceObservatory
         return $this->priced($filter)
             ->select('category', 'city', 'restaurant_type', 'year')
             ->selectRaw('COUNT(*) AS dishes')
-            ->selectRaw('COUNT(DISTINCT '.self::RESTAURANT_KEY.') AS restaurants')
+            ->selectRaw(self::RESTAURANT_COUNT.' AS restaurants')
             ->selectRaw('ROUND(AVG(price), 2) AS avg_price')
             ->selectRaw('MIN(price) AS min_price')
             ->selectRaw('MAX(price) AS max_price')
@@ -116,7 +120,7 @@ class PriceObservatory
         return $this->priced($filter)
             ->select('year')
             ->selectRaw('COUNT(*) AS dishes')
-            ->selectRaw('COUNT(DISTINCT '.self::RESTAURANT_KEY.') AS restaurants')
+            ->selectRaw(self::RESTAURANT_COUNT.' AS restaurants')
             ->groupBy('year')
             ->orderBy('year')
             ->get();
@@ -135,14 +139,16 @@ class PriceObservatory
         $prices = [];
 
         $rows = $this->priced($filter)
-            ->selectRaw("COALESCE('r' || restaurant_id, 'a' || LOWER(TRIM(restaurant_name)) || '|' || LOWER(TRIM(city))) AS restaurant_key")
-            ->selectRaw('LOWER(TRIM(name)) AS dish_key')
-            ->addSelect('year', 'price')
+            ->select('restaurant_id', 'restaurant_name', 'city', 'name', 'year', 'price')
             ->toBase()
             ->get();
 
         foreach ($rows as $row) {
-            $prices[$row->restaurant_key.'#'.$row->dish_key][(int) $row->year][] = (float) $row->price;
+            $restaurantKey = $row->restaurant_id !== null
+                ? 'r'.$row->restaurant_id
+                : 'a'.mb_strtolower(trim($row->restaurant_name)).'|'.mb_strtolower(trim($row->city));
+
+            $prices[$restaurantKey.'#'.mb_strtolower(trim($row->name))][(int) $row->year][] = (float) $row->price;
         }
 
         $years = array_values(array_unique(array_map(fn (object $row): int => (int) $row->year, $rows->all())));
