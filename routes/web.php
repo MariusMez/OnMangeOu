@@ -11,6 +11,7 @@ Route::get('/', [AnalysisController::class, 'create'])->name('home');
 Route::get('/analyses', [AnalysisController::class, 'index'])->name('analyses.index');
 Route::post('/analyses', [AnalysisController::class, 'store'])->name('analyses.store');
 Route::get('/analyses/{analysis}', [AnalysisController::class, 'show'])->name('analyses.show');
+Route::post('/analyses/{analysis}/retry', [AnalysisController::class, 'retry'])->name('analyses.retry');
 Route::get('/analyses/{analysis}/pdf', [AnalysisPdfController::class, 'show'])->name('analyses.pdf');
 Route::get('/analyses/{analysis}/images/{index}', [AnalysisImageController::class, 'show'])
     ->whereNumber('index')

@@ -9,6 +9,8 @@ use App\Models\Analysis;
 use App\Services\Ai\AiMenuAnalyst;
 use App\Services\Omnes\OmnesAnalyzer;
 use App\Support\MockData;
+use Illuminate\Support\Facades\Log;
+use Mockery;
 use Tests\TestCase;
 
 class AiMenuAnalystTest extends TestCase
@@ -44,6 +46,30 @@ class AiMenuAnalystTest extends TestCase
         $this->assertArrayHasKey('optimized_menu', $optimization);
         MenuOptimizer::assertPrompted(fn ($prompt) => $prompt->contains('Objectif du restaurateur : Augmenter le ticket moyen')
             && $prompt->contains('Analyse Omnes'));
+    }
+
+    public function test_an_unusable_optimisation_response_is_logged_before_failing(): void
+    {
+        MenuOptimizer::fake(['{"overall_score": 58, "optimized_menu": {"title": "Chez Lu']);
+        Log::spy();
+
+        try {
+            app(AiMenuAnalyst::class)->optimize(
+                MockData::menu(),
+                (new OmnesAnalyzer)->analyze(MockData::menu()),
+                new Analysis(['restaurant_name' => 'Chez Lucien', 'city' => 'Lyon', 'restaurant_type' => 'Bistrot / brasserie']),
+            );
+            $this->fail('Une réponse tronquée doit faire échouer l’optimisation.');
+        } catch (MenuAnalysisException $exception) {
+            $this->assertSame("Réponse du modèle inexploitable pendant l'optimisation.", $exception->getMessage());
+        }
+
+        Log::shouldHaveReceived('warning')->with('Unusable model response', Mockery::on(
+            fn (array $context): bool => $context['step'] === "l'optimisation"
+                && $context['finish_reason'] === 'stop'
+                && $context['text_length'] === 58
+                && $context['text_tail'] === '{"overall_score": 58, "optimized_menu": {"title": "Chez Lu',
+        ))->once();
     }
 
     public function test_it_rejects_an_empty_photo_list(): void

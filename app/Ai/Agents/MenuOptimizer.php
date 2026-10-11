@@ -20,7 +20,7 @@ use Laravel\Ai\Promptable;
  * carte extraite, du rapport d'Omnes et du contexte du restaurateur.
  */
 #[Provider(Lab::Anthropic)]
-#[MaxTokens(16000)]
+#[MaxTokens(32000)]
 #[Timeout(900)]
 #[CacheInstructions]
 class MenuOptimizer implements Agent, HasProviderOptions, HasStructuredOutput
@@ -68,7 +68,7 @@ class MenuOptimizer implements Agent, HasProviderOptions, HasStructuredOutput
     {
         return [
             'fallbacks' => 'default',
-            'output_config' => ['effort' => 'high'],
+            'output_config' => ['effort' => 'medium'],
         ];
     }
 }
