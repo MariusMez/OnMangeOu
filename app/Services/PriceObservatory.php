@@ -11,15 +11,23 @@ use Illuminate\Support\Facades\DB;
 /** Statistiques de prix construites sur la base de plats alimentée par les analyses. */
 class PriceObservatory
 {
-    /** @return array{analyses: int, dishes: int, restaurants: int} */
+    /**
+     * Un restaurant est un couple (nom, ville) distinct, sans tenir compte de la casse. Il est
+     * compté par sous-requête, car `||` n'est pas une concaténation en MySQL.
+     *
+     * @return array{analyses: int, dishes: int, restaurants: int}
+     */
     public function summary(): array
     {
         return [
             'analyses' => Analysis::query()->where('status', 'done')->count(),
             'dishes' => Dish::query()->count(),
-            'restaurants' => (int) Dish::query()
-                ->selectRaw('COUNT(DISTINCT LOWER(restaurant_name) || \'|\' || LOWER(city)) AS n')
-                ->value('n'),
+            'restaurants' => DB::query()
+                ->fromSub(
+                    Dish::query()->selectRaw('LOWER(restaurant_name) AS restaurant, LOWER(city) AS city')->distinct(),
+                    'restaurants',
+                )
+                ->count(),
         ];
     }
 
