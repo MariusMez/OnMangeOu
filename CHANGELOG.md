@@ -6,6 +6,10 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Unreleased]
 
+### Modifié
+- PHP 8.4 minimum (au lieu de 8.3) : les dépendances passent à Symfony 8.1, qui l’exige. La CI ne
+  teste plus que PHP 8.4 et 8.5.
+
 ## [0.4.0] - 2026-10-10
 
 ### Ajouté

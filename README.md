@@ -7,7 +7,7 @@ corrections, descriptions, mise en page et prix, puis génère une carte optimis
 Chaque analyse alimente une base de plats (prix, année, ville, type de restaurant) qui sert
 d'observatoire des prix.
 
-Application **Laravel 13** (PHP 8.3+, conçue pour PHP 8.5) avec :
+Application **Laravel 13** (PHP 8.4+, conçue pour PHP 8.5) avec :
 
 - [Laravel AI](https://laravel.com/docs/ai) (fournisseur Anthropic, agents à sortie structurée),
 - [Laravel Horizon](https://laravel.com/docs/horizon) (file de tâches Redis),
@@ -43,7 +43,7 @@ Application **Laravel 13** (PHP 8.3+, conçue pour PHP 8.5) avec :
 
 ## Démarrage
 
-Prérequis : PHP 8.3 ou plus (8.5 recommandé) avec les extensions `gd`, `sqlite3`, `mbstring`,
+Prérequis : PHP 8.4 ou plus (8.5 recommandé) avec les extensions `gd`, `sqlite3`, `mbstring`,
 `intl`, `redis` (ou `predis`), Composer, Node.js 22+, un serveur **Redis** et un Chromium
 (téléchargé par Puppeteer lors de `npm install`, ou indiqué par `LARAVEL_PDF_CHROME_PATH`).
 
