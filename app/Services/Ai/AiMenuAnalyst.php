@@ -7,6 +7,7 @@ use App\Ai\Agents\MenuReader;
 use App\Contracts\MenuAnalyst;
 use App\Exceptions\MenuAnalysisException;
 use App\Models\Analysis;
+use Illuminate\Support\Facades\Log;
 use Laravel\Ai\Files\Image;
 use Laravel\Ai\Responses\AgentResponse;
 use Laravel\Ai\Responses\StructuredAgentResponse;
@@ -14,6 +15,9 @@ use Laravel\Ai\Responses\StructuredAgentResponse;
 /** Lecture et optimisation de cartes via les agents Laravel AI (fournisseur Anthropic). */
 class AiMenuAnalyst implements MenuAnalyst
 {
+    /** Nombre de caractères de fin de réponse journalisés quand elle est inexploitable. */
+    private const int LOGGED_TEXT_TAIL_LENGTH = 500;
+
     public function __construct(
         private readonly MenuReader $reader,
         private readonly MenuOptimizer $optimizer,
@@ -81,6 +85,16 @@ class AiMenuAnalyst implements MenuAnalyst
         if (is_array($decoded) && $decoded !== []) {
             return $decoded;
         }
+
+        Log::warning('Unusable model response', [
+            'step' => $step,
+            'model' => $response->meta->model,
+            'finish_reason' => $response->steps->last()?->finishReason->value,
+            'input_tokens' => $response->usage->inputTokens,
+            'output_tokens' => $response->usage->outputTokens,
+            'text_length' => mb_strlen($response->text),
+            'text_tail' => mb_substr($response->text, -self::LOGGED_TEXT_TAIL_LENGTH),
+        ]);
 
         throw new MenuAnalysisException(sprintf('Réponse du modèle inexploitable pendant %s.', $step));
     }

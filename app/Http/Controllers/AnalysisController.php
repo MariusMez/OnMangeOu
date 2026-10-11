@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\RetryMenuAnalysis;
 use App\Actions\StartMenuAnalysis;
+use App\Enums\AnalysisStatus;
 use App\Enums\RestaurantType;
 use App\Http\Requests\StoreAnalysisRequest;
 use App\Models\Analysis;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AnalysisController extends Controller
 {
@@ -49,5 +52,16 @@ class AnalysisController extends Controller
     public function show(Analysis $analysis): View
     {
         return view('analyses.show', ['analysis' => $analysis]);
+    }
+
+    public function retry(Analysis $analysis, RetryMenuAnalysis $retry): RedirectResponse
+    {
+        if ($analysis->status !== AnalysisStatus::Error) {
+            throw new NotFoundHttpException('Seule une analyse échouée peut être relancée.');
+        }
+
+        $retry->handle($analysis);
+
+        return redirect()->route('analyses.show', $analysis);
     }
 }

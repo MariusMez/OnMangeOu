@@ -100,6 +100,46 @@ class AnalysisFlowTest extends TestCase
             ->assertSee('Lecture de la carte…');
     }
 
+    public function test_a_failed_analysis_is_retried_from_its_page(): void
+    {
+        $analysis = Analysis::create([
+            'status' => AnalysisStatus::Error,
+            'error' => 'Impossible de capturer https://www.chez-lucien.example',
+            'restaurant_name' => 'Chez Lucien',
+            'city' => 'Lyon',
+            'restaurant_type' => 'Bistrot / brasserie',
+            'website_url' => 'https://www.chez-lucien.example',
+            'model' => 'claude-opus-5-5',
+        ]);
+        $this->get(route('analyses.show', $analysis))
+            ->assertOk()
+            ->assertSee(route('analyses.retry', $analysis));
+
+        $response = $this->post(route('analyses.retry', $analysis));
+
+        $response->assertRedirect(route('analyses.show', $analysis));
+        $analysis->refresh();
+        $this->assertSame(AnalysisStatus::Done, $analysis->status);
+        $this->assertNull($analysis->error);
+        $this->assertSame('mock', $analysis->model);
+        $this->assertSame(1, $analysis->image_count);
+        $this->assertSame(17, $analysis->dishes()->count());
+    }
+
+    public function test_an_analysis_that_has_not_failed_cannot_be_retried(): void
+    {
+        $analysis = Analysis::create([
+            'status' => AnalysisStatus::Extracting,
+            'restaurant_name' => 'Chez Lucien',
+            'city' => 'Lyon',
+            'restaurant_type' => 'Bistrot / brasserie',
+        ]);
+
+        $this->post(route('analyses.retry', $analysis))->assertNotFound();
+
+        $this->assertSame(AnalysisStatus::Extracting, $analysis->refresh()->status);
+    }
+
     public function test_the_optimised_menu_is_exported_as_a_pdf(): void
     {
         Pdf::fake();

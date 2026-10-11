@@ -66,7 +66,10 @@
                 <div class="grid gap-1 text-sm">
                     <p class="font-bold">L’analyse a échoué.</p>
                     <p class="text-on-surface-variant">{{ $analysis->error }}</p>
-                    <a href="{{ route('home') }}" class="font-bold text-primary hover:underline">Relancer une analyse</a>
+                    <form method="POST" action="{{ route('analyses.retry', $analysis) }}">
+                        @csrf
+                        <button type="submit" class="font-bold text-primary hover:underline">Relancer l’analyse</button>
+                    </form>
                 </div>
             </div>
         @endif

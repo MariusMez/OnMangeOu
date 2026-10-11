@@ -25,6 +25,11 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
   page Observatoire filtrable par département, région et code postal, avec l'évolution à
   périmètre constant (mêmes plats, mêmes restaurants, d'une année à l'autre), les relevés par
   année et le bilan des restaurants collectés (fermetures, types).
+- **Relance d’une analyse échouée** : le bouton « Relancer l’analyse » de la page d’erreur
+  relance le pipeline sur la même analyse, avec ses photos ou son site web (la capture est
+  reprise si elle n’avait pas abouti), au lieu de renvoyer vers l’accueil.
+- Une réponse du modèle inexploitable est journalisée (raison d’arrêt, tokens consommés, fin
+  du texte reçu) avant l’échec de l’analyse.
 
 ### Modifié
 - La liste des types de restaurant devient l'enum `RestaurantType`.
@@ -34,6 +39,9 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 ### Corrigé
 - Observatoire des prix : le nombre de restaurants était faux sur MySQL, où `||` n’est pas une
   concaténation. Il est maintenant compté par sous-requête, quel que soit le moteur.
+- L’optimisation des grandes cartes (une soixantaine de plats) échouait : la réponse du modèle
+  était tronquée à 16 000 tokens. L’agent `MenuOptimizer` dispose désormais de 32 000 tokens,
+  avec un effort `medium` au lieu de `high`.
 
 ## [0.4.0] - 2026-10-10
 
