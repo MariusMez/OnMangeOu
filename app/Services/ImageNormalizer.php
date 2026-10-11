@@ -24,4 +24,14 @@ class ImageNormalizer
             ->encode(new JpegEncoder(quality: 85))
             ->toString();
     }
+
+    /** Même normalisation pour une image déjà en mémoire (photo téléchargée), avec un bord maximal réglable. */
+    public function normalizeBinary(string $binary, int $maxEdge = self::MAX_EDGE): string
+    {
+        return $this->manager->decodeBinary($binary)
+            ->orient()
+            ->scaleDown(width: $maxEdge, height: $maxEdge)
+            ->encode(new JpegEncoder(quality: 85))
+            ->toString();
+    }
 }

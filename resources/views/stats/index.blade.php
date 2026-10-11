@@ -49,11 +49,63 @@
                     @endforeach
                 </select>
             </label>
+            <label class="grid gap-1.5">
+                <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Département</span>
+                <select name="departement" class="rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-2.5 font-medium focus:border-primary focus:outline-none focus:ring-0">
+                    <option value="">Tous</option>
+                    @foreach ($filters['departements'] as $code => $label)
+                        <option value="{{ $code }}" @selected((string) $code === $departement)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label class="grid gap-1.5">
+                <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Région</span>
+                <select name="region" class="rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-2.5 font-medium focus:border-primary focus:outline-none focus:ring-0">
+                    <option value="">Toutes</option>
+                    @foreach ($filters['regions'] as $code => $label)
+                        <option value="{{ $code }}" @selected((string) $code === $region)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label class="grid gap-1.5">
+                <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Code postal</span>
+                <input type="text" name="postal_code" value="{{ $postalCode }}" inputmode="numeric" maxlength="5" placeholder="69001"
+                       class="w-28 rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-2.5 font-medium focus:border-primary focus:outline-none focus:ring-0">
+            </label>
             <button class="rounded-xl bg-primary px-5 py-2.5 font-bold text-on-primary hover:opacity-90">Filtrer</button>
         </form>
 
+        @if ($restaurants['total'] > 0)
+            <section class="grid gap-6">
+                <div class="flex flex-wrap items-end justify-between gap-3">
+                    <h2 class="font-serif text-3xl font-bold">Restaurants collectés</h2>
+                    <span class="text-sm text-on-surface-variant">Google Places · <code class="font-mono text-xs">php artisan opticarte:collect</code></span>
+                </div>
+                <div class="grid gap-6 md:grid-cols-3">
+                    <div class="rounded-3xl bg-surface-container-lowest p-8">
+                        <span class="block text-sm text-on-surface-variant">Référencés</span>
+                        <span class="font-serif text-5xl font-bold text-primary">{{ $restaurants['total'] }}</span>
+                    </div>
+                    <div class="rounded-3xl bg-surface-container-lowest p-8">
+                        <span class="block text-sm text-on-surface-variant">Avec une carte lue</span>
+                        <span class="font-serif text-5xl font-bold">{{ $restaurants['with_dishes'] }}</span>
+                        <span class="mt-2 block text-xs text-on-surface-variant">{{ $restaurants['collected'] }} fiches examinées</span>
+                    </div>
+                    <div class="rounded-3xl bg-surface-container-lowest p-8">
+                        <span class="block text-sm text-on-surface-variant">Fermés définitivement</span>
+                        <span class="font-serif text-5xl font-bold">{{ $restaurants['closed'] }}</span>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    @foreach ($restaurants['by_type'] as $label => $count)
+                        <x-chip tone="secondary">{{ $label }} · {{ $count }}</x-chip>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         @if ($stats->isEmpty())
-            <p class="rounded-3xl bg-surface-container-lowest p-8 text-on-surface-variant">Aucune donnée pour ces filtres. Analysez une carte pour alimenter l’observatoire.</p>
+            <p class="rounded-3xl bg-surface-container-lowest p-8 text-on-surface-variant">Aucune donnée pour ces filtres. Analysez une carte ou collectez une zone (<code class="font-mono text-sm">php artisan opticarte:collect</code>) pour alimenter l’observatoire.</p>
         @else
             <section class="grid gap-6">
                 <h2 class="font-serif text-3xl font-bold">Prix moyen par année</h2>
@@ -82,6 +134,35 @@
                                 @endforeach
                             </div>
                         </div>
+                    @endforeach
+                </div>
+            </section>
+
+            <section class="grid gap-6">
+                <div class="grid gap-2">
+                    <h2 class="font-serif text-3xl font-bold">Évolution à périmètre constant</h2>
+                    <p class="max-w-2xl text-sm text-on-surface-variant">Variation des prix des mêmes plats, dans les mêmes restaurants, d’une année de relevé à la suivante. Contrairement au prix moyen, elle ne dépend pas des plats ou restaurants qui entrent ou sortent de la base.</p>
+                </div>
+                @if ($priceIndex === [])
+                    <p class="rounded-3xl bg-surface-container-low p-8 text-sm text-on-surface-variant">Il faut des relevés sur au moins deux années pour mesurer l’évolution des prix. Relancez la collecte de la zone l’an prochain : seules les nouvelles photos de carte alimentent la nouvelle année.</p>
+                @else
+                    <div class="grid gap-6 md:grid-cols-3">
+                        @foreach ($priceIndex as $period)
+                            <div class="grid gap-3 rounded-3xl bg-surface-container-lowest p-8">
+                                <span class="text-sm font-bold text-on-surface-variant">{{ $period['from'] }} → {{ $period['to'] }}</span>
+                                @if ($period['median'] === null)
+                                    <span class="text-sm text-on-surface-variant">Aucun plat relevé les deux années.</span>
+                                @else
+                                    <span class="font-serif text-5xl font-bold {{ $period['median'] >= 0 ? 'text-primary' : 'text-tertiary' }}">{{ $period['median'] >= 0 ? '+' : '' }}{{ number_format($period['median'], 1, ',', ' ') }} %</span>
+                                    <span class="text-xs text-on-surface-variant">Médiane sur {{ $period['pairs'] }} plats comparés · moyenne {{ $period['mean'] >= 0 ? '+' : '' }}{{ number_format($period['mean'], 1, ',', ' ') }} %</span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+                <div class="flex flex-wrap gap-2">
+                    @foreach ($coverage as $year)
+                        <x-chip>{{ $year->year }} · {{ $year->restaurants }} restaurants · {{ $year->dishes }} plats</x-chip>
                     @endforeach
                 </div>
             </section>

@@ -35,6 +35,10 @@ return [
         ],
     ],
 
+    'google_places' => [
+        'key' => env('GOOGLE_PLACES_API_KEY'),
+    ],
+
     'anthropic' => [
         'key' => env('ANTHROPIC_API_KEY'),
     ],

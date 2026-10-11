@@ -4,6 +4,7 @@ namespace App\Ai\Schemas;
 
 use App\Enums\DishCategory;
 use App\Enums\MenuEngineeringClass;
+use App\Enums\PhotoKind;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\ArrayType;
 use Illuminate\JsonSchema\Types\ObjectType;
@@ -97,6 +98,18 @@ final class MenuSchemas
                 ])),
                 'footer_note' => $s->string()->description("Mentions légales / allergènes / 'prix nets, service compris'…")->nullable()->required(),
             ]),
+        ];
+    }
+
+    /** @return array<string, Type> */
+    public static function photoClassification(JsonSchema $s): array
+    {
+        return [
+            'photos' => self::list($s, self::object($s, [
+                'index' => $s->integer()->description("Numéro de la photo dans l'ordre d'envoi, à partir de 1")->required(),
+                'kind' => $s->string()->enum(PhotoKind::values())->description('Nature de la photo')->required(),
+                'has_prices' => $s->boolean()->description('true si des plats et leurs prix sont lisibles')->required(),
+            ]))->description('Un verdict par photo'),
         ];
     }
 

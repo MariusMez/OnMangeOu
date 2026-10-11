@@ -6,7 +6,28 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Unreleased]
 
+### Ajouté
+- **Collecte d'une zone française** : `php artisan opticarte:collect` cherche les restaurants
+  d'un code postal, d'une commune, d'un département, d'une région ou d'un rayon autour d'un
+  point (Google Places API New), trie leurs photos par IA (agent `MenuPhotoClassifier`) et lit
+  les cartes photographiées pour alimenter la base de plats. Collectes en file Horizon (job
+  `CollectRestaurantMenu`) ou immédiates (`--sync`), simulation sans effet (`--dry-run`),
+  plafonds de restaurants, de photos et de recherches.
+- Découpage administratif via geo.api.gouv.fr (arrondissements de Paris, Lyon et Marseille
+  compris) et référentiel des départements et régions embarqué.
+- Tables `restaurants` (localisation, classification, statut Google) et `restaurant_photos`
+  (empreinte de chaque photo examinée : une carte n'est lue qu'une fois, l'année où elle
+  apparaît). Les plats portent désormais leur restaurant, leur source, leur code postal, leur
+  département et leur région.
+- Classification des restaurants à partir des types Google Places, affinée par le type de
+  cuisine lu sur la carte.
+- **Évolution des prix d'une zone** : `php artisan opticarte:stats` (mêmes options de zone) et
+  page Observatoire filtrable par département, région et code postal, avec l'évolution à
+  périmètre constant (mêmes plats, mêmes restaurants, d'une année à l'autre), les relevés par
+  année et le bilan des restaurants collectés (fermetures, types).
+
 ### Modifié
+- La liste des types de restaurant devient l'enum `RestaurantType`.
 - PHP 8.4 minimum (au lieu de 8.3) : les dépendances passent à Symfony 8.1, qui l’exige. La CI ne
   teste plus que PHP 8.4 et 8.5.
 

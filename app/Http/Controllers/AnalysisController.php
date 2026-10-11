@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\StartMenuAnalysis;
+use App\Enums\RestaurantType;
 use App\Http\Requests\StoreAnalysisRequest;
 use App\Models\Analysis;
 use Illuminate\Contracts\View\View;
@@ -25,7 +26,7 @@ class AnalysisController extends Controller
     public function create(): View
     {
         return view('analyses.create', [
-            'restaurantTypes' => StoreAnalysisRequest::RESTAURANT_TYPES,
+            'restaurantTypes' => RestaurantType::values(),
             'recentAnalyses' => Analysis::query()
                 ->withCount('dishes')
                 ->latest()
