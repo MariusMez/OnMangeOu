@@ -1,11 +1,17 @@
 {
+    "agents": [
+        "claude_code",
+        "junie"
+    ],
     "cloud": true,
     "guidelines": true,
     "skills": [
         "infer-conventions",
         "deploying-to-cloud",
+        "ai-sdk-development",
         "laravel-best-practices",
         "testing-best-practices",
+        "configuring-horizon",
         "tailwindcss-development"
     ]
 }
