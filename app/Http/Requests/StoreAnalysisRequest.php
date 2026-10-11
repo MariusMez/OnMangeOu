@@ -6,18 +6,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAnalysisRequest extends FormRequest
 {
-    public const array RESTAURANT_TYPES = [
-        'Bistrot / brasserie',
-        'Pizzeria / italien',
-        'Gastronomique',
-        'Restauration rapide',
-        'Asiatique',
-        'Crêperie',
-        'Bar à vin / tapas',
-        'Cuisine du monde',
-        'Autre',
-    ];
-
     public function authorize(): bool
     {
         return true;
